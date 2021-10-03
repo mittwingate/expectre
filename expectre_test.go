@@ -1,7 +1,9 @@
 package expectre
 
 import (
+	"fmt"
 	"log"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -65,5 +67,32 @@ func TestWhoScript(t *testing.T) {
 	}
 
 	exp.ExpectEOF()
+	exp.Cancel()
+}
+
+func TestRegex(t *testing.T) {
+	exp := New()
+	err := exp.Spawn("scripts/who.sh")
+	if err != nil {
+		panic(err)
+	}
+
+	rex := regexp.MustCompile("(.)(.)(.) are you\\?")
+
+	res, err := exp.ExpectRegexp(rex)
+
+	if err != nil {
+		t.Fatalf("Unexpected error on regexp match: %v\n", err)
+	}
+
+	if len(res) != 1 ||
+		res[0][0] != "Who are you?" ||
+		res[0][1] != "W" ||
+		res[0][2] != "h" ||
+		res[0][3] != "o" ||
+		false {
+		t.Fatalf("Unexpected res: %v\n", res)
+	}
+
 	exp.Cancel()
 }

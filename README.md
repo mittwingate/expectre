@@ -24,6 +24,7 @@ package main
 import (
 	"fmt"
 	"github.com/mittwingate/expectre"
+	"regexp"
 )
 
 func main() {
@@ -38,8 +39,13 @@ func main() {
 	exp.ExpectString("Who are you?")
 	exp.Send("Fred\n")
 
-	match, err := exp.ExpectString("Hello,")
-	fmt.Printf("Output was: %s\n", match)
+	rx := regexp.MustCompile("(.)ello,")
+
+	res, err := exp.ExpectRegexp(rx)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Match was: %v\n", res)
 
 	exp.ExpectEOF()
 }
@@ -48,32 +54,30 @@ func main() {
 With debugging turned on, as seen above, you can see what's going on internally:
 
 ```
-2021/04/11 11:22:13 master open: /dev/ttys008 3 <nil>
-2021/04/11 11:22:13 slave starting with /dev/ttys008
-2021/04/11 11:22:13 Starting [./who.sh]
-2021/04/11 11:22:13 pid 80199 started
-2021/04/11 11:22:13 Expecting Who are you? ...
-2021/04/11 11:22:13 read returned 13 bytes
-2021/04/11 11:22:13 Found match for: Who are you? ...
-2021/04/11 11:22:13 Sending Fred
+2021/10/03 14:01:52 master open: /dev/ttys017 3 <nil>
+2021/10/03 14:01:52 slave starting with /dev/ttys017
+2021/10/03 14:01:52 Starting [../scripts/who.sh]
+2021/10/03 14:01:52 pid 53478 started
+2021/10/03 14:01:52 Expecting Who are you? ...
+2021/10/03 14:01:52 read returned 13 bytes
+2021/10/03 14:01:52 Found match for: Who are you? ...
+2021/10/03 14:01:52 Sending Fred
  ...
-2021/04/11 11:22:13 Expecting Hello, ...
-2021/04/11 11:22:13 read returned 6 bytes
-2021/04/11 11:22:13 read returned 14 bytes
-2021/04/11 11:22:13 Found match for: Hello, ...
-Output was: Hello, Fred.
-
-2021/04/11 11:22:13 Expecting EOF ...
-2021/04/11 11:22:13 read returned 0 bytes
-2021/04/11 11:22:13 received EOF
-2021/04/11 11:22:13 Shutting down 80199
-2021/04/11 11:22:13 Shutdown of 80199 complete.
+2021/10/03 14:01:52 Expecting (.)ello, ...
+2021/10/03 14:01:52 read returned 6 bytes
+2021/10/03 14:01:52 read returned 14 bytes
+2021/10/03 14:01:52 Found match for: (.)ello, ...
+Match was: [[Hello, H]]
+2021/10/03 14:01:52 Expecting EOF ...
+2021/10/03 14:01:52 read returned 0 bytes
+2021/10/03 14:01:52 received EOF
+2021/10/03 14:01:52 Shutting down 53478
+2021/10/03 14:01:52 Shutdown of 53478 complete.
 ```
 
 TODO
 ====
 
-* expectRegexp
 * interact
 * document set timeout
 * abort sends/reads after receiving EOF

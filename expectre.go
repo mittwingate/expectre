@@ -19,6 +19,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -26,7 +27,7 @@ import (
 
 const TimeoutDefault time.Duration = 60
 
-type expectreCtx struct {
+type ExpectreCtx struct {
 	Ctx      context.Context
 	Cancel   context.CancelFunc
 	Stdin    chan string
@@ -37,15 +38,15 @@ type expectreCtx struct {
 	Debug    bool
 }
 
-func New() *expectreCtx {
-	eCtx := expectreCtx{
+func New() *ExpectreCtx {
+	eCtx := ExpectreCtx{
 		Released: make(chan bool),
 		Timeout:  TimeoutDefault,
 	}
 	return &eCtx
 }
 
-func (e *expectreCtx) Spawn(args ...string) error {
+func (e *ExpectreCtx) Spawn(args ...string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	e.Ctx = ctx
 	e.Cancel = cancel
@@ -176,7 +177,7 @@ func ptyOpen() (string, int, error) {
 	return C.GoString(slaveName), int(m), nil
 }
 
-func (e *expectreCtx) ExpectString(waitFor string) (string, error) {
+func (e *ExpectreCtx) ExpectString(waitFor string) (string, error) {
 	if e.Debug {
 		log.Printf("Expecting %s ...", waitFor)
 	}
@@ -197,7 +198,30 @@ func (e *expectreCtx) ExpectString(waitFor string) (string, error) {
 	}
 }
 
-func (e *expectreCtx) ExpectEOF() error {
+func (e *ExpectreCtx) ExpectRegexp(waitFor *regexp.Regexp) ([][]string, error) {
+	if e.Debug {
+		log.Printf("Expecting %v ...", waitFor)
+	}
+	for {
+		select {
+		case line := <-e.Stdout:
+			res := waitFor.FindAllStringSubmatch(line, -1)
+			if len(res) == 0 {
+				continue
+			}
+			if e.Debug {
+				log.Printf("Found match for: %v ...", waitFor)
+			}
+			return res, nil
+			continue
+		case <-time.After(e.Timeout * time.Second):
+			return [][]string{}, errors.New(fmt.Sprintf(
+				"Timeout (%ds) exceeded waiting for %s", int(e.Timeout), waitFor))
+		}
+	}
+}
+
+func (e *ExpectreCtx) ExpectEOF() error {
 	if e.Debug {
 		log.Printf("Expecting EOF ...")
 	}
@@ -210,7 +234,7 @@ func (e *expectreCtx) ExpectEOF() error {
 	}
 }
 
-func (e *expectreCtx) Send(msg string) error {
+func (e *ExpectreCtx) Send(msg string) error {
 	if e.Debug {
 		log.Printf("Sending %s ...", msg)
 	}
