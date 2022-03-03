@@ -1,7 +1,6 @@
 package expectre
 
 import (
-	"fmt"
 	"log"
 	"regexp"
 	"strings"

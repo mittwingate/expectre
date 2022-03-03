@@ -1,3 +1,4 @@
+//go:build (aix || darwin || dragonfly || freebsd || (linux && !android) || netbsd || openbsd) && cgo
 // +build aix darwin dragonfly freebsd linux,!android netbsd openbsd
 // +build cgo
 
@@ -36,6 +37,7 @@ type ExpectreCtx struct {
 	Released chan bool
 	Timeout  time.Duration
 	Debug    bool
+	Ended    bool
 }
 
 func New() *ExpectreCtx {
@@ -122,14 +124,32 @@ func (e *ExpectreCtx) Spawn(args ...string) error {
 		panic(err)
 	}
 	if e.Debug {
-		log.Printf("pid %d started\n", p.Pid)
+		log.Printf("pid %d started ...\n", p.Pid)
 	}
+
+	go func() {
+		if e.Debug {
+			log.Printf("Setting up Wait().\n")
+		}
+		_, err = p.Wait()
+		if err != nil {
+			log.Printf("Wait %d returned %v\n", p.Pid, err)
+		}
+		if e.Debug {
+			log.Printf("Shutdown of %d complete.\n", p.Pid)
+		}
+		e.Ended = true
+		e.Released <- true
+	}()
 
 	go func() {
 		for {
 			select {
 			// shut down process
 			case <-e.Ctx.Done():
+				if e.Ended {
+					return
+				}
 				if e.Debug {
 					log.Printf("Shutting down %d\n", p.Pid)
 				}
@@ -137,14 +157,6 @@ func (e *ExpectreCtx) Spawn(args ...string) error {
 				if err != nil {
 					log.Printf("Kill %d returned %v\n", p.Pid, err)
 				}
-				_, err = p.Wait()
-				if err != nil {
-					log.Printf("Wait %d returned %v\n", p.Pid, err)
-				}
-				if e.Debug {
-					log.Printf("Shutdown of %d complete.\n", p.Pid)
-				}
-				e.Released <- true
 				return
 			}
 		}
