@@ -2,6 +2,9 @@
 // +build aix darwin dragonfly freebsd linux,!android netbsd openbsd
 // +build cgo
 
+// This package is a simple (but incomplete) implementation of the unix utility
+// Expect. It spawns new processes and lets the caller send messages to their
+// stdin, and watch for matching output on their stdout/stderr.
 package expectre
 
 /*
@@ -27,28 +30,30 @@ import (
 )
 
 const TimeoutDefault time.Duration = 60
+const Version = "0.02"
 
-type ExpectreCtx struct {
+type Expectre struct {
 	Ctx      context.Context
-	Cancel   context.CancelFunc
-	Stdin    chan string
-	Stdout   chan string
-	Stderr   chan string
-	Released chan bool
-	Timeout  time.Duration
-	Debug    bool
-	Ended    bool
+	Cancel   context.CancelFunc // call Cancel() to terminate running process
+	Stdin    chan string // Send messages to Stdin
+	Stdout   chan string // Read messages from Stdout
+	Stderr   chan string // Read messages from Stderr
+	Released chan bool // Receive a message when the process has ended
+	Timeout  time.Duration // Time to wait for expected patterns before giving up
+	Debug    bool // Print additional messages on process status
+	Ended    bool // Flag to indicate if process has ended
 }
 
-func New() *ExpectreCtx {
-	eCtx := ExpectreCtx{
+func New() *Expectre {
+	e := Expectre{
 		Released: make(chan bool),
 		Timeout:  TimeoutDefault,
 	}
-	return &eCtx
+	return &e
 }
 
-func (e *ExpectreCtx) Spawn(args ...string) error {
+// Spawn new process, watch its stdin/out/err
+func (e *Expectre) Spawn(args ...string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	e.Ctx = ctx
 	e.Cancel = cancel
@@ -189,7 +194,8 @@ func ptyOpen() (string, int, error) {
 	return C.GoString(slaveName), int(m), nil
 }
 
-func (e *ExpectreCtx) ExpectString(waitFor string) (string, error) {
+// Expect a string in stdout of the running process
+func (e *Expectre) ExpectString(waitFor string) (string, error) {
 	if e.Debug {
 		log.Printf("Expecting %s ...", waitFor)
 	}
@@ -210,7 +216,8 @@ func (e *ExpectreCtx) ExpectString(waitFor string) (string, error) {
 	}
 }
 
-func (e *ExpectreCtx) ExpectRegexp(waitFor *regexp.Regexp) ([][]string, error) {
+// Expect string matching regex in stdout of the running process
+func (e *Expectre) ExpectRegexp(waitFor *regexp.Regexp) ([][]string, error) {
 	if e.Debug {
 		log.Printf("Expecting %v ...", waitFor)
 	}
@@ -233,7 +240,8 @@ func (e *ExpectreCtx) ExpectRegexp(waitFor *regexp.Regexp) ([][]string, error) {
 	}
 }
 
-func (e *ExpectreCtx) ExpectEOF() error {
+// Wait for the spawned process to terminate
+func (e *Expectre) ExpectEOF() error {
 	if e.Debug {
 		log.Printf("Expecting EOF ...")
 	}
@@ -246,7 +254,8 @@ func (e *ExpectreCtx) ExpectEOF() error {
 	}
 }
 
-func (e *ExpectreCtx) Send(msg string) error {
+// Send a message to stdin of the running process
+func (e *Expectre) Send(msg string) error {
 	if e.Debug {
 		log.Printf("Sending %s ...", msg)
 	}

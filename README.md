@@ -75,6 +75,39 @@ Match was: [[Hello, H]]
 2021/10/03 14:01:52 Shutdown of 53478 complete.
 ```
 
+Configuration
+=============
+
+* expectre.Timeout
+
+Channels to Watch
+=================
+
+* expectre.Cancel
+* expectre.Stdin
+* expectre.Stdout
+* expectre.Stderr
+* expectre.Released
+* expectre.Ended
+
+type ExpectreCtx struct {
+	Ctx      context.Context
+	Cancel   context.CancelFunc
+	Stdin    chan string
+	Stdout   chan string
+	Stderr   chan string
+	Released chan bool
+	Timeout  time.Duration
+	Debug    bool
+	Ended    bool
+}
+
+Changes
+=======
+
+0.02 2022-03-05 fix self-termination, add docs
+0.01 2021-04-11 first version
+
 TODO
 ====
 
