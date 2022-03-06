@@ -75,12 +75,35 @@ Match was: [[Hello, H]]
 2021/10/03 14:01:52 Shutdown of 53478 complete.
 ```
 
-TODO
+Configuration
+=============
+
+* expectre.Timeout - Time to wait for on an expected string before timing out
+
+Communication Channels
+=======================
+
+* expectre.Stdin - Send messages to stdin of the process
+* expectre.Stdout - Read process output on stdout
+* expectre.Stderr - Read process output on stderr
+* expectre.Released - Receive a message when the process has terminated
+
+Attributes
+==========
+
+* expectre.Cancel() // Call this function to terminate the running process
+* expectre.Ended // Flag to indicate if the process has ended
+
+Changes
+=======
+
+* v0.0.1 2022-03-05 fix self-termination, add docs
+* v0.0.0 2021-04-11 first version
+
+Todo
 ====
 
 * interact
-* document set timeout
-* abort sends/reads after receiving EOF
 
 Cheers!
 
