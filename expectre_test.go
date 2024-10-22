@@ -32,9 +32,13 @@ func TestTTyinScript(t *testing.T) {
 	// throw away echo
 	_ = <-exp.Stdout
 
-	text = strings.TrimRight(<-exp.Stdout, " \n\r")
-	if text != "Input was: blah blah" {
-		t.Fatalf("Unexpected text: '%s'\n", text)
+	out := <-exp.Stdout
+	i := strings.Index(out, "\r")
+	if i != -1 {
+		out = out[:i]
+	}
+	if out != "Input was: blah blah" {
+		t.Fatalf("Unexpected text: '%s'\n", out)
 	}
 
 	exp.Cancel()

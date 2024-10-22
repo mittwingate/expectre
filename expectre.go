@@ -160,7 +160,9 @@ func (e *Expectre) Spawn(args ...string) error {
 				}
 				err := p.Kill()
 				if err != nil {
-					log.Printf("Kill %d returned %v\n", p.Pid, err)
+					if err != os.ErrProcessDone {
+					    log.Printf("Kill %d returned %v\n", p.Pid, err)
+					}
 				}
 				return
 			}
