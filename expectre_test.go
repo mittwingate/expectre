@@ -71,6 +71,9 @@ func TestWhoScript(t *testing.T) {
 
 	exp.ExpectEOF()
 	exp.Cancel()
+	if exp.ExitCode != 0 {
+		t.Fatalf("Unexpected exit code: %d\n", exp.ExitCode)
+	}
 }
 
 func TestRegex(t *testing.T) {
@@ -98,4 +101,23 @@ func TestRegex(t *testing.T) {
 	}
 
 	exp.Cancel()
+}
+
+func TestFailingScript(t *testing.T) {
+	exp := New()
+	err := exp.Spawn("scripts/fail.sh")
+	if err != nil {
+		panic(err)
+	}
+	exp.Debug = false
+
+	if exp.Debug {
+		log.Printf("Testing fail")
+	}
+
+	exp.ExpectEOF()
+	exp.Cancel()
+	if exp.ExitCode != 1 {
+		t.Fatalf("Unexpected exit code: %d\n", exp.ExitCode)
+	}
 }

@@ -93,10 +93,12 @@ Attributes
 
 * expectre.Cancel() // Call this function to terminate the running process
 * expectre.Ended // Flag to indicate if the process has ended
+* expectre.ExitCode // Exit code of the previous spawned process after it ended
 
 Changes
 =======
 
+* v0.0.3 2024-10-22 (ms) add ExitCode attribute
 * v0.0.1 2022-03-05 fix self-termination, add docs
 * v0.0.0 2021-04-11 first version
 

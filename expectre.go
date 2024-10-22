@@ -30,18 +30,19 @@ import (
 )
 
 const TimeoutDefault time.Duration = 60
-const Version = "v0.0.2"
+const Version = "v0.0.3"
 
 type Expectre struct {
 	Ctx      context.Context
 	Cancel   context.CancelFunc // call Cancel() to terminate running process
-	Stdin    chan string // Send messages to Stdin
-	Stdout   chan string // Read messages from Stdout
-	Stderr   chan string // Read messages from Stderr
-	Released chan bool // Receive a message when the process has ended
-	Timeout  time.Duration // Time to wait for expected patterns before giving up
-	Debug    bool // Print additional messages on process status
-	Ended    bool // Flag to indicate if process has ended
+	Stdin    chan string        // Send messages to Stdin
+	Stdout   chan string        // Read messages from Stdout
+	Stderr   chan string        // Read messages from Stderr
+	Released chan bool          // Channel to receive a message when the process has ended
+	Timeout  time.Duration      // Time to wait for expected patterns before giving up
+	Debug    bool               // Print additional messages on process status
+	Ended    bool               // Flag to indicate if process has ended
+	ExitCode int                // Process exit code
 }
 
 func New() *Expectre {
@@ -136,7 +137,7 @@ func (e *Expectre) Spawn(args ...string) error {
 		if e.Debug {
 			log.Printf("Setting up Wait().\n")
 		}
-		_, err = p.Wait()
+		state, err := p.Wait()
 		if err != nil {
 			log.Printf("Wait %d returned %v\n", p.Pid, err)
 		}
@@ -144,6 +145,7 @@ func (e *Expectre) Spawn(args ...string) error {
 			log.Printf("Shutdown of %d complete.\n", p.Pid)
 		}
 		e.Ended = true
+		e.ExitCode = state.ExitCode()
 		e.Released <- true
 	}()
 
@@ -161,7 +163,7 @@ func (e *Expectre) Spawn(args ...string) error {
 				err := p.Kill()
 				if err != nil {
 					if err != os.ErrProcessDone {
-					    log.Printf("Kill %d returned %v\n", p.Pid, err)
+						log.Printf("Kill %d returned %v\n", p.Pid, err)
 					}
 				}
 				return
