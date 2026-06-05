@@ -121,3 +121,25 @@ func TestFailingScript(t *testing.T) {
 		t.Fatalf("Unexpected exit code: %d\n", exp.ExitCode)
 	}
 }
+
+func TestStderrScript(t *testing.T) {
+	exp := New()
+	exp.Debug = true
+	exp.Timeout = 10
+	err := exp.Spawn("scripts/stderr.sh")
+	if err != nil {
+		panic(err)
+	}
+
+	if exp.Debug {
+		log.Printf("Testing stderr")
+	}
+
+	if err := exp.ExpectEOF(); err != nil {
+		t.Fatalf("Unexpected error waiting for EOF: %v\n", err)
+	}
+	exp.Cancel()
+	if exp.ExitCode != 0 {
+		t.Fatalf("Unexpected exit code: %d\n", exp.ExitCode)
+	}
+}
