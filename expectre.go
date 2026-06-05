@@ -75,7 +75,7 @@ func (e *Expectre) Spawn(args ...string) error {
 	}
 
 	e.Stdin = make(chan string)
-	e.Stdout = make(chan string)
+	e.Stdout = make(chan string, 1024)
 
 	// Read from master, and send arriving data chunks up the stdout channel
 	go func() {
@@ -129,6 +129,7 @@ func (e *Expectre) Spawn(args ...string) error {
 	if err != nil {
 		panic(err)
 	}
+	file.Close()
 	if e.Debug {
 		log.Printf("pid %d started ...\n", p.Pid)
 	}

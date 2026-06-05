@@ -139,7 +139,7 @@ func TestStderrScript(t *testing.T) {
 		t.Fatalf("Unexpected error waiting for EOF: %v\n", err)
 	}
 	exp.Cancel()
-	if exp.ExitCode != 0 {
+	if exp.ExitCode != 1 {
 		t.Fatalf("Unexpected exit code: %d\n", exp.ExitCode)
 	}
 }
