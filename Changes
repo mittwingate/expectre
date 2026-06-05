@@ -1,0 +1,2 @@
+v0.0.4: 2026-06-03
+  * Fix bug with expectre hanging when only waiting for EOF.
